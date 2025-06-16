@@ -1,148 +1,175 @@
+import os
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
-import os
 from datetime import datetime, timedelta
-
-st.set_page_config(layout="wide")
-st.title("🌤️ Bangalore Weather Forecast Dashboard")
-
-# === Refresh Button ===
-if st.button("🔄 Refresh Data"):
-    st.experimental_rerun()
+from langchain_community.chat_models import ChatOpenAI
+from langchain_experimental.agents import create_csv_agent
+from langchain_community.llms import OpenAI
+from dotenv import load_dotenv
+import re
 
 
-# === Get latest prediction file ===
+# ==== CONFIG ====
+st.set_page_config(layout="wide", page_title="Bengaluru Skies")
+# oa_token = st.secrets["OA_API_KEY"]
+load_dotenv()
+oa_token = os.getenv("OA_API_KEY")
+
+
+# ==== FUNCTIONS ====
 def get_latest_prediction_file():
     files = [f for f in os.listdir("predictions") if f.endswith(".csv")]
     files.sort(reverse=True)
     return os.path.join("predictions", files[0]) if files else None
 
 
-file_path = get_latest_prediction_file()
-if not file_path:
+def load_weather_data():
+    file_path = get_latest_prediction_file()
+    if not file_path:
+        return None, None
+    df = pd.read_csv(file_path, parse_dates=["datetime"])
+    df["datetime"] = pd.to_datetime(df["datetime"])
+    return df, file_path
+
+
+def get_trend_icon(curr, prev):
+    if prev is None:
+        return "⏺️"
+    if curr > prev:
+        return "🔺"
+    elif curr < prev:
+        return "🔻"
+    else:
+        return "⏺️"
+
+
+# ==== SIDEBAR ====
+st.sidebar.title("🔍 Navigate")
+tab = st.sidebar.radio("Select a view:", ["🌤️ Today & Forecast", "💬 Ask AI"])
+
+
+# ==== MAIN APP ====
+
+df, latest_file = load_weather_data()
+if df is None:
     st.error("No prediction file found.")
     st.stop()
 
-# === Load data ===
-df = pd.read_csv(file_path, parse_dates=["datetime"])
-df["datetime"] = pd.to_datetime(df["datetime"])
-
-# === Filter for today ===
 today = datetime.today().date()
-today_data = df[df["datetime"].dt.date == today]
-st.subheader(f"🌞 Today's Weather - {today.strftime('%b %d, %Y')}")
-
-# === Display metrics as cards ===
-cols = st.columns(len(today_data))
-for i, (_, row) in enumerate(today_data.iterrows()):
-    with cols[i]:
-        st.metric(label=f"📍 {row['Region']}", value=f"{row['temp']:.1f}°C", help="Actual temperature")
-        st.write(f"💧 Humidity: {row['humidity']}%")
-        st.write(f"🌫️ Windgust: {row['windgust']}km/h")
-
-# === Line plot: Past 3 + Next 5 days ===
+regions = df["Region"].unique()
 
 
-# Define range
-# start_date = today - timedelta(days=3)
-# end_date = today + timedelta(days=5)
-# plot_df = df[(df["datetime"].dt.date >= start_date) & (df["datetime"].dt.date <= end_date)].copy()
-#
-# # Use predicted_temp where available, else temp
-# plot_df["temperature"] = plot_df.apply(
-#     lambda x: x["predicted_temp"] if not pd.isna(x["predicted_temp"]) else x["temp"], axis=1
-# )
+# ==== Format floats to 2 decimals ====
+def format_response_numbers(response: str, decimals=2):
+    pattern = rf"(-?\d+\.\d{{{decimals}}})\d*"
+    return re.sub(pattern, r"\1", response)
 
-# # Plot
-# fig, ax = plt.subplots(figsize=(10, 5))
-# regions = plot_df["Region"].unique()
-#
-# for region in regions:
-#     region_df = plot_df[plot_df["Region"] == region].sort_values("datetime")
-#     ax.plot(region_df["datetime"], region_df["temperature"], label=region)
-#
-#     # Add marker at the transition point (today)
-#     transition_point = region_df[region_df["datetime"].dt.date == today]
-#     if not transition_point.empty:
-#         ax.scatter(
-#             transition_point["datetime"],
-#             transition_point["temperature"],
-#             color=ax.get_lines()[-1].get_color(),
-#             edgecolor="black",
-#             zorder=5
-#             # ,label=f"{region} (today)"
-#         )
-#
-# ax.set_title("Region-wise Temperature Trend (Past 3 + Predicted for next 5 Days)")
-# ax.set_xlabel("Date")
-# ax.set_ylabel("Temperature (°C)")
-# plt.xticks(rotation=30)
-# ax.legend()
-# st.pyplot(fig)
+# ==== TAB 1: TODAY & FORECAST ====
+if tab == "🌤️ Today & Forecast":
+    st.title("🌤️ Bengaluru Skies")
+    # st.markdown(f"**Data file:** `{os.path.basename(latest_file)}`")
 
-# === Enhanced Line plot: Past 3 + Next 5 days ===
-from matplotlib.dates import DateFormatter
+    st.subheader(f"🌞 Today's Weather — {today.strftime('%b %d, %Y')}")
+    # Header with info tooltip
 
-# === Enhanced Line plot: Past 3 + Next 5 days ===
-st.subheader("📈 Forecast: Past 3 and Next 5 Days (All Regions)")
+    today_data = df[df["datetime"].dt.date == today]
+    cols = st.columns(len(today_data))
+    for i, (_, row) in enumerate(today_data.iterrows()):
+        with cols[i]:
+            st.metric(
+                label=f"📍 {row['Region']}",
+                value=f"{row['temp']:.1f}°C"
+                # help="Average temperature for the day"
+            )
+            st.write(f"💧 Humidity: {row['humidity']}%")
+            st.write(f"🌬️ Windgust: {row['windgust']} km/h")
 
-# Filter date range
-start_date = today - timedelta(days=3)
-end_date = today + timedelta(days=5)
-plot_df = df[(df["datetime"].dt.date >= start_date) & (df["datetime"].dt.date <= end_date)].copy()
+    # Forecast cards for next 5 days
+    st.markdown("---")
 
-# Choose best temperature value
-plot_df["temperature"] = plot_df.apply(
-    lambda x: x["predicted_temp"] if not pd.isna(x["predicted_temp"]) else x["temp"], axis=1
-)
-
-# Plot setup
-sns.set(style="whitegrid")
-fig, ax = plt.subplots(figsize=(12, 6))
-palette = sns.color_palette("Set2", n_colors=len(plot_df["Region"].unique()))
-regions = plot_df["Region"].unique()
-
-for i, region in enumerate(regions):
-    region_df = plot_df[plot_df["Region"] == region].sort_values("datetime")
-
-    ax.plot(
-        region_df["datetime"],
-        region_df["temperature"],
-        label=region,
-        color=palette[i],
-        linewidth=2.5,
-        marker="o",
-        markersize=5,
-        markerfacecolor='white',
-        markeredgewidth=1.5,
+    st.subheader("📆 7-Day Weather (Yesterday + Today + Next 5 Days)")
+    start_date = today - timedelta(days=1)
+    end_date = today + timedelta(days=5)
+    forecast_df = df[(df["datetime"].dt.date >= start_date) & (df["datetime"].dt.date <= end_date)].copy()
+    forecast_df["temperature"] = forecast_df.apply(
+        lambda x: x["predicted_temp"] if not pd.isna(x["predicted_temp"]) else x["temp"], axis=1
     )
 
-    # Mark today's point
-    today_point = region_df[region_df["datetime"].dt.date == today]
-    if not today_point.empty:
-        ax.scatter(
-            today_point["datetime"],
-            today_point["temperature"],
-            color=palette[i],
-            edgecolor="black",
-            zorder=5,
-            s=100,
-            linewidth=1.5
-        )
+    for region in regions:
+        st.markdown(f"### 📍 {region}")
+        # region_df = forecast_df[forecast_df["Region"] == region].set_index(forecast_df["datetime"].dt.date)
+        region_df = forecast_df[forecast_df["Region"] == region].copy()
+        region_df["date"] = region_df["datetime"].dt.date
+        region_df = region_df.set_index("date")
 
-# Labels and styling
-ax.set_title("🌡️ Region-wise Temperature Trend (Past 3 + Next 5 Days)", fontsize=16, weight='bold')
-ax.set_xlabel("Date", fontsize=12)
-ax.set_ylabel("Temperature (°C)", fontsize=12)
-ax.tick_params(axis='both', labelsize=10)
+        dates = pd.date_range(start_date, end_date).date
+        cols = st.columns(len(dates))
+        prev_temp = None
+        for i, date in enumerate(dates):
+            with cols[i]:
+                if date in region_df.index:
+                    row = region_df.loc[date]
+                    temp = round(row["temperature"], 1)
+                    trend = get_trend_icon(temp, prev_temp)
+                    label = "Today" if date == today else date.strftime("%a %d")
+                    # st.metric(
+                    #     label=f"{label} {trend}",
+                    #     value=f"{temp}°C"
+                    #     # help="Average temperature for the day"
+                    # )
+                    # st.caption(f"💧 {row['humidity']}% | 🌬️ {row['windgust']} km/h")
+                    # Set background color based on the day
+                    if date == today:
+                        bg_color = "#4CAF50"  # slightly deeper green for today
+                    elif date == today - timedelta(days=1):
+                        bg_color = "#81C784"  # light green for yesterday
+                    else:
+                        bg_color = "#9575CD"  # light purple for future days
 
-# Set x-axis date format to dd/mm/yyyy and keep horizontal
-ax.xaxis.set_major_formatter(DateFormatter("%d/%m/%Y"))
-plt.setp(ax.get_xticklabels(), rotation=0, ha="center")
+                    # Build card with HTML
+                    st.markdown(
+                        f"""
+                        <div style="
+                            background-color: {bg_color};
+                            padding: 1rem;
+                            border-radius: 12px;
+                            text-align: center;
+                            box-shadow: 1px 1px 6px rgba(0, 0, 0, 0.05);
+                        ">
+                            <strong>{label} {trend}</strong><br>
+                            <span style="font-size: 1.5em;">{temp}°C</span><br>
+                            <span style="font-size: 0.9em;">💧 {row['humidity']}% | 🌬️ {row['windgust']} km/h</span>
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
 
-# Move legend outside
-ax.legend(title="Region", bbox_to_anchor=(1.02, 1), loc="upper left", fontsize=10)
+                    prev_temp = temp
+                else:
+                    st.metric(label=date.strftime("%a %d"), value="—")
 
-st.pyplot(fig)
+
+
+
+elif tab == "💬 Ask AI":
+    st.title("💬 Ask Weather AI")
+    st.markdown(f"You're chatting with a weather assistant using a csv file with weather data for Whitefield, Hebbal, Devanahalli, Electronic City, Mysore Road, BTM Layout. The data range is from 2023 to present day.")
+
+    # query = st.text_input("Type your weather question:")
+    query = st.text_input(
+        "Type your weather question:",
+        placeholder="E.g., Forecast for Whitefield tomorrow? Or, Average humidity in Hebbal last week? Or, Highest temperature in BTM Layout during June 2024?"
+    )
+
+    if query:
+        with st.spinner("Thinking..."):
+            try:
+                llm = OpenAI(temperature=0, max_tokens=400, api_key=oa_token)
+                agent = create_csv_agent(llm, latest_file, verbose=False, allow_dangerous_code=True)
+                response = agent.run(query)
+                formatted = format_response_numbers(response)
+                st.success(formatted)
+            except Exception as e:
+                st.error(f"❌ Error: {str(e)}")
+
