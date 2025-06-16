@@ -147,7 +147,7 @@ if tab == "🌤️ Today & Forecast":
                         ">
                             <strong>{label} {trend}</strong><br>
                             <span style="font-size: 1.5em;">{temp}°C</span><br>
-                            # <span style="font-size: 0.9em;">💧 {row['humidity']}% | 🌬️ {row['windgust']} km/h</span>
+                            
                         </div>
                         """,
                         unsafe_allow_html=True
