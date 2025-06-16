@@ -51,10 +51,18 @@ tab = st.sidebar.radio("Select a view:", ["🌤️ Today & Forecast", "💬 Ask 
 
 # ==== MAIN APP ====
 
-df, latest_file = load_weather_data()
-if df is None:
-    st.error("No prediction file found.")
-    st.stop()
+# ==== MAIN APP ====
+if "df" not in st.session_state or st.button("🔄 Refresh Data"):
+    df, latest_file = load_weather_data()
+    if df is None:
+        st.error("No prediction file found.")
+        st.stop()
+    st.session_state.df = df
+    st.session_state.latest_file = latest_file
+else:
+    df = st.session_state.df
+    latest_file = st.session_state.latest_file
+
 
 today = datetime.today().date()
 regions = df["Region"].unique()
