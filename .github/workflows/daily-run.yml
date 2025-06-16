@@ -23,6 +23,8 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run pipeline
+        env:
+          vc_api_key: ${{ secrets.VC_API_KEY }}
         run: |
           python pipeline.py
 
