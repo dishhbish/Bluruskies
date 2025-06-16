@@ -79,7 +79,7 @@ if tab == "🌤️ Today & Forecast":
     # st.markdown(f"**Data file:** `{os.path.basename(latest_file)}`")
 
     st.subheader(f"🌞 Today's Weather — {today.strftime('%b %d, %Y')}")
-    st.write(df_check.head())
+    st.write(df.head()) # remove
 
     # Header with info tooltip
 
