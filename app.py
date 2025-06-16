@@ -90,8 +90,9 @@ if tab == "🌤️ Today & Forecast":
                 value=f"{row['temp']:.1f}°C"
                 # help="Average temperature for the day"
             )
-            st.write(f"💧 Humidity: {row['humidity']}%")
+            st.write(f"🔆 Solar energy: {row['solarenergy']}MJ/m²")
             st.write(f"🌬️ Windgust: {row['windgust']} km/h")
+            st.write(f"Conditions: {row['conditions']}")
 
     # Forecast cards for next 5 days
     st.markdown("---")
