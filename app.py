@@ -163,7 +163,7 @@ if tab == "🌤️ Today & Forecast":
 
 
 
-elif tab == "💬 Chat Weather":
+elif tab == "💬 ChatBot":
     st.title("💬 Ask Weather AI")
     st.markdown(f"You're chatting with a weather assistant using a csv file with weather data for Whitefield, Hebbal, Devanahalli, Electronic City, Mysore Road, BTM Layout. The data range is from 2023 to present day.")
 
