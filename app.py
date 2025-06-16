@@ -170,7 +170,7 @@ elif tab == "💬 Ask AI":
     # query = st.text_input("Type your weather question:")
     query = st.text_input(
         "Type a simple weather question:",
-        placeholder="E.g., Humidity in Whitefield today? Or, Average temp during May 2023 in hebbal?"
+        placeholder="E.g., When and where was the hottest day in May 2025? Or, Average temp during December 2023 in hebbal?"
     )
 
     if query:
