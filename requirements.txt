@@ -1,0 +1,7 @@
+pandas
+numpy
+holidays
+xgboost
+scikit-learn
+requests
+python-dotenv
