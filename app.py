@@ -79,7 +79,7 @@ if tab == "🌤️ Today & Forecast":
     # st.markdown(f"**Data file:** `{os.path.basename(latest_file)}`")
 
     st.subheader(f"🌞 Today's Weather — {today.strftime('%b %d, %Y')}")
-    st.write(df.head()) # remove
+    # st.write(df.head()) # remove
 
     # Header with info tooltip
 
@@ -169,8 +169,8 @@ elif tab == "💬 Ask AI":
 
     # query = st.text_input("Type your weather question:")
     query = st.text_input(
-        "Type your weather question:",
-        placeholder="E.g., Forecast for Whitefield tomorrow? Or, Average humidity in Hebbal last week? Or, Highest temperature in BTM Layout during June 2024?"
+        "Type a simple weather question:",
+        placeholder="E.g., Humidity in Whitefield today? Or, Average temp during May 2023 in hebbal??"
     )
 
     if query:
