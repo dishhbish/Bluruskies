@@ -174,7 +174,16 @@ elif tab == "💬 Ask AI":
         with st.spinner("Thinking..."):
             try:
                 llm = OpenAI(temperature=0, max_tokens=400, api_key=oa_token)
-                agent = create_csv_agent(llm, latest_file, verbose=False, allow_dangerous_code=True)
+                # agent = create_csv_agent(llm, latest_file, verbose=True, allow_dangerous_code=True)
+                agent = create_csv_agent(
+                        llm,
+                        latest_file,
+                        verbose=False,
+                        allow_dangerous_code=True,
+                        agent_type="zero-shot-react-description",
+                        max_iterations=10,        # default is 5
+                        max_execution_time=120,   # in seconds
+                    )
                 response = agent.run(query)
                 formatted = format_response_numbers(response)
                 st.success(formatted)
