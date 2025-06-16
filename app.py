@@ -46,7 +46,7 @@ def get_trend_icon(curr, prev):
 
 # ==== SIDEBAR ====
 st.sidebar.title("🔍 Navigate")
-tab = st.sidebar.radio("Select a view:", ["🌤️ Today & Forecast", "💬 Ask AI"])
+tab = st.sidebar.radio("Select a view:", ["🌤️ Today & Forecast", "💬 Weather Bot"])
 
 
 # ==== MAIN APP ====
@@ -163,9 +163,9 @@ if tab == "🌤️ Today & Forecast":
 
 
 
-elif tab == "💬 ChatBot":
-    st.title("💬 Ask Weather AI")
-    st.markdown(f"You're chatting with a weather assistant using a csv file with weather data for Whitefield, Hebbal, Devanahalli, Electronic City, Mysore Road, BTM Layout. The data range is from 2023 to present day.")
+elif tab == "💬 Weather Bot":
+    st.title("💬 Let's chaat weather with AI")
+    st.markdown(f"You're chatting with a weather assistant using a csv file with weather data for Whitefield, Hebbal, Devanahalli, Electronic City, Mysore Road, BTM Layout. The date range is from 2023 to present day.")
 
     # query = st.text_input("Type your weather question:")
     query = st.text_input(
