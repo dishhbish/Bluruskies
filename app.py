@@ -79,6 +79,8 @@ if tab == "🌤️ Today & Forecast":
     # st.markdown(f"**Data file:** `{os.path.basename(latest_file)}`")
 
     st.subheader(f"🌞 Today's Weather — {today.strftime('%b %d, %Y')}")
+    st.write(df_check.head())
+
     # Header with info tooltip
 
     today_data = df[df["datetime"].dt.date == today]
