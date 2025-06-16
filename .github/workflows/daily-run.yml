@@ -1,0 +1,36 @@
+name: Daily Prediction Run
+
+on:
+  schedule:
+    - cron: "0 2 * * *"  # Runs daily at 2 AM UTC
+  workflow_dispatch:     # Allows manual trigger
+
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run pipeline
+        run: |
+          python pipeline.py
+
+      - name: Commit prediction output
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add predictions/all_regions_with_predictions_*.csv
+          git commit -m "🌀 Daily prediction update"
+          git push
+        continue-on-error: true
