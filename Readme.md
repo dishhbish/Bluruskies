@@ -6,7 +6,7 @@
 
 ## Features
 
-### ⛅ Weather Data Pipeline
+### Weather Data Pipeline
 - Uses **Visual Crossing API** to continuously fetch and update localized weather datasets (temperature, humidity, dew point, conditions) for 8 Bengaluru regions.
 - Automatically persists updates in time-indexed `.csv` files for reproducible training and inference.
 
