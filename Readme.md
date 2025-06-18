@@ -1,4 +1,4 @@
-# 🌤️ Bengaluru Skies: Weather Forecasting & Insight Platform using Machine Learning
+# Bengaluru Skies: Weather Forecasting & Insight Platform using Machine Learning
 
 **Bengaluru Skies** is an end-to-end ML-powered weather analytics platform that:
 
