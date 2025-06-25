@@ -25,7 +25,7 @@
 
 ### Chatbot Integration
 - Interactive **natural language weather assistant** powered by:
-  - [LangChain CSV agent](https://docs.langchain.com/docs/integrations/tools/csv) + OpenAI GPT models.
+  - LangChain CSV agent + OpenAI GPT models.
   - Supports queries like:
     - _"Where was the hottest day in May 2025?"_
     - _"What was the average temperature in Hebbal during December 2023?"_
